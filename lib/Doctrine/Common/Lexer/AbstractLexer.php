@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace Doctrine\Common\Lexer;
 
 use ReflectionClass;
+use UnitEnum;
 
+use function assert;
+use function get_class;
 use function implode;
+use function is_int;
+use function is_string;
 use function preg_split;
 use function sprintf;
 use function substr;
@@ -18,7 +23,7 @@ use const PREG_SPLIT_OFFSET_CAPTURE;
 /**
  * Base class for writing simple lexers, i.e. for creating small DSLs.
  *
- * @template T of string|int
+ * @template T of UnitEnum|string|int
  */
 abstract class AbstractLexer
 {
@@ -275,13 +280,18 @@ abstract class AbstractLexer
     /**
      * Gets the literal for a given token.
      *
-     * @param int|string $token
+     * @param T $token
      *
      * @return int|string
      */
     public function getLiteral($token)
     {
-        $className = static::class;
+        if ($token instanceof UnitEnum) {
+            $className = get_class($token);
+        } else {
+            $className = static::class;
+        }
+
         $reflClass = new ReflectionClass($className);
         $constants = $reflClass->getConstants();
 
@@ -290,6 +300,8 @@ abstract class AbstractLexer
                 return $className . '::' . $name;
             }
         }
+
+        assert(is_string($token) || is_int($token));
 
         return $token;
     }
